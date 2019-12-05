@@ -29,20 +29,20 @@ data <- readxl::read_xlsx("Matrix_MetaAnalysis_Diagnosis_updated290719.xlsx")
 
 ##### IDENTIFY COLUMNS WE WANT #####
 
-head(data)
+#head(data)
 #sample size of groups
-data$SAMPLE_SIZE_SZ
-data$SAMPLE_SIZE_HC
+#data$SAMPLE_SIZE_SZ
+#data$SAMPLE_SIZE_HC
 #Mean within participant
-one <- as.data.frame(data$PITCH_F0_SZ_M)
-two <- as.data.frame(data$PITCH_F0_HC_M)
-data$PITCH_F0_SZ_SD
-data$PITCH_F0_HC_SD
+#one <- as.data.frame(data$PITCH_F0_SZ_M)
+#two <- as.data.frame(data$PITCH_F0_HC_M)
+#data$PITCH_F0_SZ_SD
+#data$PITCH_F0_HC_SD
 #SD within participant
-data$PITCH_F0SD_SZ_M
-data$PITCH_F0SD_HC_M
-data$PITCH_F0SD_SZ_SD
-data$PITCH_F0SD_HC_SD
+#data$PITCH_F0SD_SZ_M
+#data$PITCH_F0SD_HC_M
+#data$PITCH_F0SD_SZ_SD
+#data$PITCH_F0SD_HC_SD
 
 #each study has one row 
 #different amount of studies have reported mean and sd, but we don't need only studies that have both 

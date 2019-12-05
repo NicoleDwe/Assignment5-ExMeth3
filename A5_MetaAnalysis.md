@@ -42,166 +42,21 @@ data <- readxl::read_xlsx("Matrix_MetaAnalysis_Diagnosis_updated290719.xlsx")
 ``` r
 ##### IDENTIFY COLUMNS WE WANT #####
 
-head(data)
-```
-
-    ## # A tibble: 6 x 147
-    ##   ArticleID StudyID Specification Title Authors Year_publication Article
-    ##       <dbl>   <dbl> <chr>         <chr> <chr>              <dbl> <chr>  
-    ## 1         1       1 <NA>          Emot… Pinhei…             2016 Pinhei…
-    ## 2         2       2 <NA>          Clin… Zhang …             2016 Zhang …
-    ## 3         3       3 _1_it         "Ass… Bernar…             2016 Bernar…
-    ## 4         3       4 _2_us         "Ass… Bernar…             2016 Bernar…
-    ## 5         4       5 <NA>          Can … Martín…             2015 Martín…
-    ## 6         5       6 <NA>          Spee… Bedwel…             2014 Bedwel…
-    ## # … with 140 more variables: DIAGNOSIS <chr>, MALE_SZ <chr>,
-    ## #   FEMALE_SZ <chr>, MALE_HC <chr>, FEMALE_HC <chr>, AGE_M_SZ <chr>,
-    ## #   AGE_SD_SZ <chr>, AGE_M_HC <chr>, AGE_SD_HC <chr>,
-    ## #   EDUCATION_M_SZ <chr>, EDUCATION_SD_SZ <chr>, EDUCATION_M_HC <chr>,
-    ## #   EDUCATION_SD_HC <chr>, SAMPLE_SIZE_SZ <dbl>, SAMPLE_SIZE_HC <dbl>,
-    ## #   TASK_TOTAL_DURATION_HC_M <chr>, TASK_TOTAL_DURATION_HC_SD <chr>,
-    ## #   TASK_TOTAL_DURATION_SZ_M <chr>, TASK_TOTAL_DURATION_SZ_SD <chr>,
-    ## #   TYPE_OF_TASK <chr>, MEAN_DURATION <chr>, SP_DUR_HC_M <dbl>,
-    ## #   SP_DUR_HC_SD <dbl>, SP_DUR_SZ_M <dbl>, SP_DUR_SZ_SD <dbl>,
-    ## #   SPEECH_RATE <chr>, SP_RAT_HC_M <dbl>, SP_RAT_HC_SD <dbl>,
-    ## #   SP_RAT_SZ_M <dbl>, SP_RAT_SZ_SD <dbl>, SPEECH_PERCENTAGE <chr>,
-    ## #   SP_PER_HC_M <dbl>, SP_PER_HC_SD <dbl>, SP_PER_SZ_M <dbl>,
-    ## #   SP_PER_SZ_SD <dbl>, PAUSE_DURATION <chr>, PA_DUR_HC_M <dbl>,
-    ## #   PA_DUR__HC_SD <dbl>, PA_DUR_SZ_M <dbl>, PA_DUR_SZ_SD <dbl>,
-    ## #   Number_of_pauses <chr>, PA_NUM_HC_M <dbl>, PA_NUM_HC_SD <dbl>,
-    ## #   PA_NUM_SZ_M <dbl>, PA_NUM_SZ_SD <dbl>, `Total length of pauses` <chr>,
-    ## #   PA_TLE_HC_M <dbl>, PA_TLE_HC_SD <dbl>, PA_TLE_SZ_M <dbl>,
-    ## #   PA_TLE_SZ_SD <dbl>, `Response latency` <chr>, PA_RL_HC_M <dbl>,
-    ## #   PA_RL_HC_SD <dbl>, PA_RL_SZ_M <dbl>, PA_RL_SZ_SD <dbl>, `Pause
-    ## #   SD` <chr>, PA_SD_HC_M <dbl>, PA_SD_HC_SD <dbl>, PA_SD_SZ_M <dbl>,
-    ## #   PA_SD_SZ_SD <dbl>, frequency...68 <chr>, PITCH_F0_HC_M <dbl>,
-    ## #   PITCH_F0_HC_SD <dbl>, PITCH_F0_SZ_M <dbl>, PITCH_F0_SZ_SD <dbl>,
-    ## #   frequency...73 <lgl>, PITCH_F1_HC_M <dbl>, PITCH_F1_HC_SD <dbl>,
-    ## #   PITCH_F1_SZ_M <dbl>, PITCH_F1_SZ_SD <dbl>, frequency...78 <lgl>,
-    ## #   PITCH_F2_HC_M <dbl>, PITCH_F2_HC_SD <dbl>, PITCH_F2_SZ_M <dbl>,
-    ## #   PITCH_F2_SZ_SD <dbl>, frequency...83 <lgl>, PITCH_F3_HC_M <dbl>,
-    ## #   PITCH_F3_HC_SD <dbl>, PITCH_F3_SZ_M <dbl>, PITCH_F3_SZ_SD <dbl>,
-    ## #   frequency...88 <lgl>, PITCH_F4_HC_M <dbl>, PITCH_F4_HC_SD <dbl>,
-    ## #   PITCH_F4_SZ_M <dbl>, PITCH_F4_SZ_SD <dbl>, frequency...93 <lgl>,
-    ## #   PITCH_F5_HC_M <dbl>, PITCH_F5_HC_SD <dbl>, PITCH_F5_SZ_M <dbl>,
-    ## #   PITCH_F5_SZ_SD <dbl>, frequency...98 <lgl>, PITCH_F6_HC_M <dbl>,
-    ## #   PITCH_F6_HC_SD <dbl>, PITCH_F6_SZ_M <dbl>, PITCH_F6_SZ_SD <dbl>,
-    ## #   pitch_f0_variability <chr>, PITCH_F0SD_HC_M <dbl>,
-    ## #   PITCH_F0SD_HC_SD <dbl>, PITCH_F0SD_SZ_M <dbl>, PITCH_F0SD_SZ_SD <dbl>,
-    ## #   …
-
-``` r
+#head(data)
 #sample size of groups
-data$SAMPLE_SIZE_SZ
-```
-
-    ##  [1] 17 26 20 20 45  8 30 39 28 28 13 13 26 72 24 60 39 38 40 89 26 26 19
-    ## [24] 46 30 25  6 17 23 15 10 40 37 21 30 12 12 22 48 30 53 15 40 11  6 94
-    ## [47] 62 10  6 22 22 45 45 36 36 30 57
-
-``` r
-data$SAMPLE_SIZE_HC
-```
-
-    ##  [1]  18  30  NA  NA  35  36  NA  18  27  27   6   6  26  40  NA  19  37
-    ## [18]  34  NA  26  NA  NA  20  20  NA  NA   6  NA  NA  16  20  60  37  21
-    ## [35]  30  12  12  NA  48  NA  23  NA  20  NA  NA 101  68  10  NA  20  20
-    ## [52]  19  19  25  25  15  30
-
-``` r
+#data$SAMPLE_SIZE_SZ
+#data$SAMPLE_SIZE_HC
 #Mean within participant
-one <- as.data.frame(data$PITCH_F0_SZ_M)
-two <- as.data.frame(data$PITCH_F0_HC_M)
-data$PITCH_F0_SZ_SD
-```
-
-    ##  [1] 23.89667       NA 31.93596 30.24209 40.33000       NA       NA
-    ##  [8]       NA       NA       NA       NA       NA 19.00000       NA
-    ## [15]       NA       NA       NA       NA       NA  7.70000       NA
-    ## [22]       NA       NA       NA       NA       NA       NA       NA
-    ## [29]       NA 27.59333       NA       NA       NA       NA       NA
-    ## [36]       NA       NA       NA       NA       NA       NA       NA
-    ## [43]       NA       NA 57.66022       NA       NA       NA       NA
-    ## [50]       NA       NA       NA       NA       NA       NA       NA
-    ## [57]  3.15000
-
-``` r
-data$PITCH_F0_HC_SD
-```
-
-    ##  [1] 29.98333       NA       NA       NA 43.89000       NA       NA
-    ##  [8]       NA       NA       NA       NA       NA 14.00000       NA
-    ## [15]       NA       NA       NA       NA       NA  7.89000       NA
-    ## [22]       NA       NA       NA       NA       NA       NA       NA
-    ## [29]       NA 30.44000       NA       NA       NA       NA       NA
-    ## [36]       NA       NA       NA       NA       NA       NA       NA
-    ## [43]       NA       NA       NA       NA       NA       NA       NA
-    ## [50]       NA       NA       NA       NA       NA       NA       NA
-    ## [57]  3.93000
-
-``` r
+#one <- as.data.frame(data$PITCH_F0_SZ_M)
+#two <- as.data.frame(data$PITCH_F0_HC_M)
+#data$PITCH_F0_SZ_SD
+#data$PITCH_F0_HC_SD
 #SD within participant
-data$PITCH_F0SD_SZ_M
-```
+#data$PITCH_F0SD_SZ_M
+#data$PITCH_F0SD_HC_M
+#data$PITCH_F0SD_SZ_SD
+#data$PITCH_F0SD_HC_SD
 
-    ##  [1]         NA         NA  0.0875000  0.0834000 27.5000000  0.0382000
-    ##  [7]  0.5000000  0.2200000 62.7282609         NA         NA         NA
-    ## [13]         NA         NA         NA 17.6426667  3.3546406         NA
-    ## [19]  2.4200000         NA         NA  0.2116667         NA  0.5243478
-    ## [25]         NA         NA         NA         NA         NA         NA
-    ## [31]         NA         NA         NA         NA         NA         NA
-    ## [37]         NA         NA         NA         NA         NA         NA
-    ## [43]         NA         NA         NA 37.3529630 35.0944186         NA
-    ## [49]         NA         NA  0.0924000 11.3380000 20.2690000  1.6700000
-    ## [55]  1.6800000         NA  2.2300000
-
-``` r
-data$PITCH_F0SD_HC_M
-```
-
-    ##  [1]        NA        NA        NA        NA 29.670000  0.034800        NA
-    ##  [8]  0.240000 79.728261        NA        NA        NA        NA        NA
-    ## [15]        NA 21.560000  2.874333        NA        NA        NA        NA
-    ## [22]        NA        NA  0.840000        NA        NA        NA        NA
-    ## [29]        NA        NA        NA        NA        NA        NA        NA
-    ## [36]        NA        NA        NA        NA        NA        NA        NA
-    ## [43]        NA        NA        NA 38.692565 38.620628        NA        NA
-    ## [50]        NA  0.099200 17.621000 24.847000  1.510000  1.500000        NA
-    ## [57]  2.610000
-
-``` r
-data$PITCH_F0SD_SZ_SD
-```
-
-    ##  [1]         NA         NA  0.0394000  0.0242000 10.3600000  0.0150000
-    ##  [7]  0.2800000  0.0500000 44.5695652         NA         NA         NA
-    ## [13]         NA         NA         NA  7.2773333  0.1933455         NA
-    ## [19]  1.1133333         NA         NA  0.1158333         NA  0.2496087
-    ## [25]         NA         NA         NA         NA         NA         NA
-    ## [31]         NA         NA         NA         NA         NA         NA
-    ## [37]         NA         NA         NA         NA         NA         NA
-    ## [43]         NA         NA         NA 24.1570370 22.1958140         NA
-    ## [49]         NA         NA  0.0044000  4.0510000  4.8340000  0.8700000
-    ## [55]  0.9400000         NA  0.7900000
-
-``` r
-data$PITCH_F0SD_HC_SD
-```
-
-    ##  [1]          NA          NA          NA          NA  8.32000000
-    ##  [6]  0.01600000          NA  0.08000000 43.18478261          NA
-    ## [11]          NA          NA          NA          NA          NA
-    ## [16]  6.78000000  0.05473898          NA          NA          NA
-    ## [21]          NA          NA          NA  0.50200000          NA
-    ## [26]          NA          NA          NA          NA          NA
-    ## [31]          NA          NA          NA          NA          NA
-    ## [36]          NA          NA          NA          NA          NA
-    ## [41]          NA          NA          NA          NA          NA
-    ## [46] 24.79962825 26.79506726          NA          NA          NA
-    ## [51]  0.00240000  3.27300000  2.58900000  0.69000000  0.57900000
-    ## [56]          NA  1.02000000
-
-``` r
 #each study has one row 
 #different amount of studies have reported mean and sd, but we don't need only studies that have both 
 
