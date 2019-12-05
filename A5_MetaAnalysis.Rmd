@@ -1,0 +1,235 @@
+---
+title: "Assignment 5 - Meta-analysis of pitch in schizophrenia"
+author: "Study Group 5: Astrid Rybner, Kata Molnár, Sofie Rødkjær and Nicole Dwenger"
+date: "November 6, 2019"
+output:   
+  md_document:
+    variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Building on the shoulders of giants: meta-analysis
+
+## Questions to be answered
+
+1. What is the current evidence for distinctive vocal patterns in schizophrenia? Report how many papers report quantitative estimates, comment on what percentage of the overall studies reviewed they represent (see PRISMA chart) your method to analyze them, the estimated effect size of the difference (mean effect size and standard error) and forest plots representing it. N.B. Only measures of pitch mean and pitch sd are required for the assignment. Feel free to ignore the rest (although pause behavior looks interesting, if you check my article).
+
+2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
+
+3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
+
+```{r}
+library(tidyverse, lme4)
+pacman::p_load(lmerTest, simr, DescTools, goeveg, sjstats, effsize, ggplot2, dplyr, groupdata2, stringr, caret, tidyr, metafor, reshape2)
+
+data <- readxl::read_xlsx("Matrix_MetaAnalysis_Diagnosis_updated290719.xlsx")
+
+##### IDENTIFY COLUMNS WE WANT #####
+
+head(data)
+#sample size of groups
+data$SAMPLE_SIZE_SZ
+data$SAMPLE_SIZE_HC
+#Mean within participant
+one <- as.data.frame(data$PITCH_F0_SZ_M)
+two <- as.data.frame(data$PITCH_F0_HC_M)
+data$PITCH_F0_SZ_SD
+data$PITCH_F0_HC_SD
+#SD within participant
+data$PITCH_F0SD_SZ_M
+data$PITCH_F0SD_HC_M
+data$PITCH_F0SD_SZ_SD
+data$PITCH_F0SD_HC_SD
+
+#each study has one row 
+#different amount of studies have reported mean and sd, but we don't need only studies that have both 
+
+##### CALCULATE SMD AND VARIANCE #####
+mean <- escalc(measure = "SMD", n1i = data$SAMPLE_SIZE_SZ, n2i = data$SAMPLE_SIZE_HC, m1i = data$PITCH_F0_SZ_M, m2i = data$PITCH_F0_HC_M, sd1i = data$PITCH_F0_SZ_SD, sd2i = data$PITCH_F0_HC_SD) 
+#SMD: standardized mean difference, method we use 
+#n1i: sample size of SZ in each study
+#n2i: sample size of HC in each study
+#m1i: mean pitch of SZ in each study
+#m2i: mean pitch of HC in each study
+#sd1i: variability of pitch of SZ in each study 
+#sd2i: variability of pitch of HC in each study 
+#result: 
+  #y(i): standardized mean difference between mean in pitch in SZC and HC in each study, effect size
+  #v(i): variance of that measure (sd2), not se
+
+sd <- escalc(measure = "SMD", n1i = data$SAMPLE_SIZE_SZ, n2i = data$SAMPLE_SIZE_HC, m1i = data$PITCH_F0SD_SZ_M, m2i = data$PITCH_F0SD_HC_M, sd1i = data$PITCH_F0SD_SZ_SD, sd2i = data$PITCH_F0SD_HC_SD)
+#SMD: standardized mean difference, method we use 
+#n1i: sample size of SZ in each study
+#n2i: sample size of HC in each study
+#m1i: variance in pitch SZ in each study
+#m2i: variance in pitch of HC in each study
+#sd1i: variance in the variance in pitch of SZ in each study 
+#sd2i: variance in the variance in pitch of HC in each study 
+#result: 
+  #y(i): standardized mean difference between mean in pitch in SZC and HC in each study, effect size
+  #v(i): measure of variance (sd2), not se
+
+
+##### MERGE #####
+#how do we calculate the effect size for the meta anylsis? #merge the two data frame 
+data <- data %>%
+  mutate(es_mean = mean$yi, var_mean = mean$vi, es_sd = sd$yi, var_sd = sd$vi)
+
+##### MODELS #####
+#calculating an overall effect size, while punishing studies with a bigger variance (weights) and adding a random effect for the studies (they might differ in their effect)
+estimate_mean <- lmer(es_mean ~ 1 + (1|StudyID), weights = 1/var_mean, data = data, 
+                      control = lmerControl(check.nobs.vs.nlev="ignore",
+                                            check.nobs.vs.nRE="ignore"), REML =F)
+summary(estimate_mean)
+
+
+#calculating an overall effect size of the variability/sd, while punishing studies with a bigger variance (weights) and adding a random effect for the studies (they might differ in their effect)
+estimate_sd <- lmer(es_sd ~ 1 + (1|StudyID), weights = 1/var_sd, data = data, 
+                    control = lmerControl(check.nobs.vs.nlev="ignore",
+                                            check.nobs.vs.nRE="ignore"), REML = F)
+summary(estimate_sd)
+
+
+#alternative way of creating models
+estimate_mean1 <- rma(es_mean, var_mean, data = data, slab=StudyID)
+estimate_sd1 <- rma(es_sd, var_sd, data = data, slab=StudyID)
+
+#### PLOTS ####
+#for mean 
+forest(estimate_mean1)
+funnel(estimate_mean1)
+#standardised mean differences; smaller sample the bigger standard error; bigger sample, smaller effect size 
+regtest(estimate_mean1) #regtast same ans ranktest but takes into account that the effects might not be linear
+ranktest(estimate_mean1) 
+infmean <- influence(estimate_mean1) #influential data points
+print(infmean) #study 11 influential
+plot(infmean)
+
+#for pitch sd
+forest(estimate_sd1)
+funnel(estimate_sd1)
+regtest(estimate_sd1)
+ranktest(estimate_sd1)
+infsd <- influence(estimate_sd1)
+print(infsd) #study 15 influential
+plot(infsd)
+#standardised mean differences for variability
+
+### ADD OWN STUDY
+#just notes (can ignore)
+#yi: if pitchmean ~ diagnosis + ..., if pitch mnean scaled, the beta for diagnosis is yi 
+#vi: sd2, two options: (1) beta comes with se, and take se as sd, cheating, because divided by n, but n is fractional, nobody knows what it means, (2) sd is average errror in prediction, lmer will give average residual = error, so the average residual is the sd - square it and get vi 
+#what if 1 for each study, probably have (1+Diagnosis|Study), tells you how each study is deviating from main (diagnosis beta), so you have beta and 7 values for each study (extract by RANEF(MODEL)) if take that value and add to beta, than you get if for each study seperately. 
+
+############# PART 2: ADDING OUR STUDY ###################
+
+#load data
+danish <- read.csv("danishdata.csv")
+data <- readxl::read_xlsx("Matrix_MetaAnalysis_Diagnosis_updated290719.xlsx")
+
+#summarise to calculate mean and sd
+sum <- danish %>% group_by(Diagnosis) %>% 
+  summarise("SampleSize" = nlevels(as.factor(uID)),
+            "MeanofMean" = mean(mean),
+            "SDofMean" = sd(mean), 
+            "MeanofSD" = mean(sd), 
+            "SDofSD" = sd(sd))
+
+#create row
+new <- data.frame("StudyID" = 60, 
+                  "SAMPLE_SIZE_SZ" = sum$SampleSize[sum$Diagnosis == 1], 
+                  "SAMPLE_SIZE_HC" = sum$SampleSize[sum$Diagnosis == 0],
+                  "PITCH_F0_SZ_M" = sum$MeanofMean[sum$Diagnosis == 1],
+                  "PITCH_F0_HC_M" = sum$MeanofMean[sum$Diagnosis == 0],
+                  "PITCH_F0_SZ_SD" = sum$SDofMean[sum$Diagnosis == 1], 
+                  "PITCH_F0_HC_SD" = sum$SDofMean[sum$Diagnosis == 0],
+                  "PITCH_F0SD_SZ_M" = sum$MeanofSD[sum$Diagnosis == 1],
+                  "PITCH_F0SD_HC_M" = sum$MeanofSD[sum$Diagnosis == 0],
+                  "PITCH_F0SD_SZ_SD" = sum$SDofSD[sum$Diagnosis == 1], 
+                  "PITCH_F0SD_HC_SD" = sum$SDofSD[sum$Diagnosis == 0])
+
+#add row
+data <- bind_rows(data, new)
+
+#escalc to get SMD (effect size) and variance (sd2)
+mean <- escalc(measure = "SMD", n1i = data$SAMPLE_SIZE_SZ, n2i = data$SAMPLE_SIZE_HC, m1i = data$PITCH_F0_SZ_M, m2i = data$PITCH_F0_HC_M, sd1i = data$PITCH_F0_SZ_SD, sd2i = data$PITCH_F0_HC_SD) 
+sd <- escalc(measure = "SMD", n1i = data$SAMPLE_SIZE_SZ, n2i = data$SAMPLE_SIZE_HC, m1i = data$PITCH_F0SD_SZ_M, m2i = data$PITCH_F0SD_HC_M, sd1i = data$PITCH_F0SD_SZ_SD, sd2i = data$PITCH_F0SD_HC_SD)
+
+#mutate
+data <- data %>%
+  mutate(es_mean = mean$yi, var_mean = mean$vi, es_sd = sd$yi, var_sd = sd$vi)
+
+##### MODELS #####
+model_mean_new <- lmer(es_mean ~ 1 + (1 | StudyID), data = data, weights = 1/var_mean, REML = F, control = lmerControl(
+    check.nobs.vs.nlev = "ignore",
+    check.nobs.vs.nRE = "ignore"
+))
+summary(model_mean_new)
+
+
+model_sd_new <- lmer(es_sd ~ 1 + (1 | StudyID), data = data, weights = 1/var_sd, REML = F, control = lmerControl(
+    check.nobs.vs.nlev = "ignore",
+    check.nobs.vs.nRE = "ignore"
+))
+summary(model_sd_new)
+
+model_mean_new1 <- rma(yi = es_mean, vi = var_mean, data = data, slab = StudyID)
+summary(model_mean_new1)
+confint(model_mean_new1)
+model_sd_new1 <- rma(yi = es_sd, vi = var_sd, data = data, slab = StudyID)
+summary(model_sd_new1)
+confint(model_sd_new1)
+
+####### PLOTS AND STUFF ######
+#mean
+forest(model_mean_new1)
+funnel(model_mean_new1, main = "Random Effects Model", xlab = "Standardized Mean
+Difference")
+inf1 <- influence(model_mean_new1)
+print(inf1)
+plot(inf1) #study 13 seems to be influential (the dot is red), but it's problably study 11
+regtest(model_mean_new1) #if this is significant, then there is publication bias
+ranktest(model_mean_new1) #similar to the regtest BUT takes into account that effects may not be linear
+
+#sd
+forest(model_sd_new1)
+funnel(model_sd_new1, main = "Random Effects Model", xlab = "Standardized Mean
+Difference - SD")
+inf1_sd <- influence(model_sd_new1)
+print(inf1_sd) #study 15 is influential 
+plot(inf1_sd)
+regtest(model_sd_new1)
+ranktest(model_sd_new1)
+
+### FOR REPORT ###
+#get descriptive things 
+meandescript <- filter(data, StudyID == "1" | StudyID == "5" | StudyID == "11" | StudyID == "18" | StudyID == "28" | StudyID == "50")
+sum(meandescript$SAMPLE_SIZE_SZ) #249
+sum(meandescript$SAMPLE_SIZE_HC) #151
+
+sddescript <- filter(data, StudyID == "5" | StudyID == "6" | StudyID == "8" |StudyID == "9" |StudyID == "14" |StudyID == "15" |StudyID == "22" |StudyID == "42" |StudyID == "46" |StudyID == "47" |StudyID == "48" | StudyID == "50")
+sddescript <- sddescript[-5,]
+sum(sddescript$SAMPLE_SIZE_SZ) #662
+sum(sddescript$SAMPLE_SIZE_HC) #499
+
+```
+
+
+## Tips on the process to follow:
+
+- Download the data on all published articles analyzing voice in schizophrenia and the prisma chart as reference of all articles found and reviewed
+- Look through the dataset to find out which columns to use, and if there is any additional information written as comments (real world data is always messy!).
+    * Hint: PITCH_F0M and PITCH_F0SD group of variables are what you need
+    * Hint: Make sure you read the comments in the columns: `pitch_f0_variability`, `frequency`, `Title`,  `ACOUST_ANA_DESCR`, `DESCRIPTION`, and `COMMENTS`
+- Following the procedure in the slides calculate effect size and standard error of the effect size per each study. N.B. we focus on pitch mean and pitch standard deviation.
+ . first try using lmer (to connect to what you know of mixed effects models)
+ . then use rma() (to get some juicy additional statistics)
+
+- Build a forest plot of the results (forest(model))
+ 
+- Go back to Assignment 3, add your own study to the data table, and re-run meta-analysis. Do the results change?
+
+- Now look at the output of rma() and check tau and I2
